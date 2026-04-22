@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project implements a conversational AI agent for **AutoStream**, a SaaS platform that provides automated video editing tools for content creators.
+This project implements a conversational AI agent for **AutoStream**, a SaaS (Software as a Service) platform that provides automated video editing tools for content creators.
 
 The agent is designed to:
 
@@ -14,7 +14,21 @@ The agent is designed to:
 
 ---
 
-## Key Features
+## Demo Video
+
+Watch the demo here:
+https://drive.google.com/file/d/1q_HkwXa_Ruauwrub30JHUGlYLcL8jMj6/view?usp=sharing
+
+This demo showcases:
+
+* RAG-based pricing response
+* High-intent detection
+* Lead qualification workflow
+* Tool execution (`mock_lead_capture`)
+
+---
+
+## Core Features
 
 ### 1. Intent Detection
 
@@ -24,11 +38,11 @@ The agent classifies user input into:
 * product_inquiry
 * high_intent
 
-This is implemented using a **rule-based approach** for reliability and efficiency.
+A **rule-based approach** is used for reliability and reduced API usage.
 
 ---
 
-### 2. RAG (Retrieval-Augmented Generation)
+### 2. RAG Pipeline
 
 The agent retrieves product information from a local JSON knowledge base.
 
@@ -46,7 +60,7 @@ This ensures accurate and grounded responses.
 
 When a user shows high intent:
 
-* The agent enters **lead collection mode**
+* The agent enters lead collection mode
 * It asks for:
 
   * Name
@@ -57,11 +71,11 @@ When a user shows high intent:
 
 ---
 
-### 4. Tool Execution (Core Requirement)
+### 4. Tool Execution
 
-Once all details are collected, the agent triggers:
+Once all required details are collected, the agent triggers:
 
-```python
+```python id="j3r2sn"
 mock_lead_capture(name, email, platform)
 ```
 
@@ -69,9 +83,9 @@ This simulates a backend API call and confirms successful lead capture.
 
 ---
 
-## Sample Output (Actual Run)
+## Sample Output
 
-```text
+```text id="0m8vgr"
 You: I want to try the Pro plan for my Youtube channel
 [DEBUG] Intent: high_intent
 [DEBUG] → LEAD FLOW
@@ -98,27 +112,10 @@ Platform : Youtube
 
 ---
 
-## State Management
-
-The agent uses LangGraph to maintain state across multiple conversation turns.
-
-Tracked values:
-
-* Conversation history
-* Intent
-* Lead name
-* Lead email
-* Lead platform
-* Lead captured flag
-
-This ensures correct multi-step flow and prevents premature tool execution.
-
----
-
 ## Tech Stack
 
 * Python 3.9+
-* LangGraph (stateful workflow)
+* LangGraph
 * LangChain
 * Google Gemini (**gemini-2.5-flash-lite**)
 * JSON (knowledge base)
@@ -132,9 +129,7 @@ The system uses **Gemini 2.5 Flash-Lite**, which supports:
 * ~15 requests per minute
 * ~1000 requests per day
 
-This makes it suitable for high-speed and efficient interactions.
-
-To optimize usage:
+To optimize performance:
 
 * Intent detection is rule-based
 * Lead extraction uses regex
@@ -144,7 +139,7 @@ To optimize usage:
 
 ## Project Structure
 
-```
+```id="k1a8yc"
 autostream-agent/
 │
 ├── data/
@@ -159,25 +154,39 @@ autostream-agent/
 
 ---
 
-## How to Run
+## How to Run Locally
 
-### 1. Install dependencies
+### 1. Clone repository
 
+```id="0w8mgh"
+git clone https://github.com/YOUR_USERNAME/autostream-agent.git
+cd autostream-agent
 ```
+
+### 2. Create virtual environment
+
+```id="1o6u0y"
+python -m venv venv
+venv\Scripts\activate
+```
+
+### 3. Install dependencies
+
+```id="e5khp0"
 pip install -r requirements.txt
 ```
 
-### 2. Add API key
+### 4. Add API key
 
 Create a `.env` file:
 
-```
+```id="7a1x2v"
 GOOGLE_API_KEY=your_api_key_here
 ```
 
-### 3. Run the agent
+### 5. Run the agent
 
-```
+```id="b9z9hg"
 python agent.py
 ```
 
@@ -185,42 +194,38 @@ python agent.py
 
 ## Architecture Explanation
 
-This project uses **LangGraph** to implement a structured agent workflow.
+This project uses **LangGraph** to implement a structured, stateful conversational agent. LangGraph was chosen because it provides explicit control over agent behavior through nodes and transitions, making it ideal for enforcing conditions such as triggering tool execution only after all required user details are collected.
 
-Flow:
+The system operates as a workflow of nodes:
 
-1. User input is received
-2. Intent is detected using rule-based logic
-3. If product query → RAG retrieves knowledge
-4. If high intent → lead collection starts
-5. Lead details are extracted using deterministic logic (regex + rules)
-6. Once all fields are available → tool execution is triggered
+* **Intent Detection Node**: Classifies user input using rule-based logic
+* **RAG Module**: Retrieves relevant information from a local JSON knowledge base
+* **Response Node**: Uses Gemini to generate contextual responses
+* **Lead Extraction Node**: Extracts user details using deterministic logic (regex)
+* **Tool Execution Node**: Calls `mock_lead_capture()` only when all required fields are available
 
-LangGraph manages transitions between:
-
-* intent detection
-* response generation
-* lead extraction
-* tool execution
-
-State is preserved across all steps, enabling consistent multi-turn conversations.
+State is managed using a structured dictionary (`AgentState`) that persists across conversation turns. It stores message history, intent, collected lead data, and flags such as `lead_captured`. This ensures consistent multi-turn interactions and prevents premature tool execution.
 
 ---
 
-## WhatsApp Integration (Concept)
+## WhatsApp Integration (Using Webhooks)
 
 To integrate this agent with WhatsApp:
 
 1. Use WhatsApp Business API (Meta or Twilio)
-2. Create a backend using FastAPI or Flask
-3. Configure a webhook to receive user messages
-4. Pass messages to the agent
-5. Send responses back via WhatsApp API
-6. Store user state using a database (e.g., Redis) with phone number as key
+2. Build a backend server using FastAPI or Flask
+3. Configure a webhook endpoint to receive incoming messages
+4. When a message arrives:
 
-Flow:
+   * Pass it to the agent
+   * Process it using LangGraph
+   * Generate a response
+5. Send the response back via WhatsApp API
+6. Store user state in a database (e.g., Redis) using phone number as key
 
-```
+### Flow
+
+```id="f98y4q"
 User → WhatsApp → Webhook → Backend → Agent → Response → WhatsApp
 ```
 
@@ -229,7 +234,7 @@ User → WhatsApp → Webhook → Backend → Agent → Response → WhatsApp
 ## Future Improvements
 
 * Use vector database (FAISS) for semantic RAG
-* Store leads in a database instead of mock function
+* Store leads in a real database
 * Deploy using FastAPI
 * Add multi-user session handling
 
